@@ -1,0 +1,179 @@
+/*
+ * Copyright (c) 2024 Uri Shaked
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+`default_nettype none
+
+module tt_um_vga_example (
+  input  wire [7:0] ui_in,    // Dedicated inputs
+  output wire [7:0] uo_out,   // Dedicated outputs
+  input  wire [7:0] uio_in,   // IOs: Input path
+  output wire [7:0] uio_out,  // IOs: Output path
+  output wire [7:0] uio_oe,   // IOs: Enable path (active high: 0=input, 1=output)
+  input  wire       ena,      // always 1 when the design is powered, so you can ignore it
+  input  wire       clk,      // clock
+  input  wire       rst_n     // reset_n - low to reset
+);
+
+  // VGA signals
+  wire hsync;
+  wire vsync;
+  wire [1:0] R;
+  wire [1:0] G;
+  wire [1:0] B;
+  wire video_active;
+  wire [9:0] pix_x;
+  wire [9:0] pix_y;
+
+  // TinyVGA PMOD
+  assign uo_out = {hsync, B[0], G[0], R[0], vsync, B[1], G[1], R[1]};
+
+  // Unused outputs assigned to 0.
+  assign uio_out = 0;
+  assign uio_oe  = 0;
+
+  // Suppress unused signals warning
+  wire _unused_ok = &{ena, ui_in, uio_in};
+
+  // Generate sync signals
+  hvsync_generator hvsync_gen(
+    .clk(clk),
+    .reset(~rst_n),
+    .hsync(hsync),
+    .vsync(vsync),
+    .display_on(video_active),
+    .hpos(pix_x),
+    .vpos(pix_y)
+  );
+
+  // Always nice to have a counter around
+  reg [9:0] counter;
+
+  always @(posedge vsync, negedge rst_n) begin
+    if (~rst_n) begin
+      counter <= 0;
+    end else begin
+      counter <= counter + 1;
+    end
+  end
+
+  // Suppress unused signals warning
+  wire _unused_ok_ = &{pix_y};
+
+  // Ship tests
+  wire [1:0] draw_ship_line, in_ship_hitbox;
+  simple_ship_vga_manager ship_man_0(.en_i(1'b1), .pix_x_i(pix_x >> 3), .pix_y_i(pix_y >> 3), .ship_x_i(10'd0), .ship_y_i(10'd0),
+    .angle_i(ui_in[2:0]), .draw_ship_line_o(draw_ship_line[0]), .in_ship_hitbox_o(in_ship_hitbox[0]));
+
+  // VGA
+  assign R = {2{in_ship_hitbox[0]}};
+  assign G = {2{draw_ship_line[0]}};
+  assign B = {2{0}};
+
+endmodule
+
+module simple_ship_vga_manager #(
+  XMAX = 5'd31,
+  YMAX = 5'd31
+) (
+  input en_i,
+  input [9:0] pix_x_i,
+  input [9:0] pix_y_i,
+  input [9:0] ship_x_i,
+  input [9:0] ship_y_i,
+  input [2:0] angle_i,
+  output draw_ship_line_o,
+  output in_ship_hitbox_o
+);
+
+// Determine whether the current pixel is within bounds
+wire offset_en, within_x, within_y;
+assign within_x = (pix_x_i >= ship_x_i) & (pix_x_i < ship_x_i + XMAX + 1);
+assign within_y = (pix_y_i >= ship_y_i) & (pix_y_i < ship_y_i + YMAX + 1);
+assign offset_en = en_i & within_x & within_y;
+
+// Get offset VGA pixel coordinates
+wire [5:0] offset_x, offset_y;
+assign offset_x = offset_en ? {(pix_x_i - ship_x_i)}[5:0] : 5'b0;
+assign offset_y = offset_en ? {(pix_y_i - ship_y_i)}[5:0] : 5'b0;
+
+// Wrap the main VGA graphics manager after simplifying pixel math
+simple_ship_vga_manager_offset #(.XMAX, .YMAX) ship_man_helper (.en_i(offset_en),
+  .pix_x_i(offset_x), .pix_y_i(offset_y), .angle_i, .draw_ship_line_o, .in_ship_hitbox_o);
+
+endmodule // simple_ship_vga_manager
+
+module simple_ship_vga_manager_offset #(
+  parameter XMAX = 5'd31,
+  parameter YMAX = 5'd31, 
+  localparam XW = $clog2(XMAX),
+  localparam YW = $clog2(YMAX)
+) (
+  input en_i,
+  input [XW:0] pix_x_i,
+  input [YW:0] pix_y_i,
+  input [2:0] angle_i,
+  output draw_ship_line_o,
+  output in_ship_hitbox_o
+);
+
+  // Quadrants
+  wire in_top_half, in_bottom_half, in_left_half, in_right_half;
+  assign in_top_half = ~in_bottom_half;
+  assign in_bottom_half = pix_y_i[YW-1];
+  assign in_left_half = ~in_right_half;
+  assign in_right_half = pix_x_i[XW-1];
+
+  // Boundary lines
+
+  wire [3:0] lines_x, lines_y; // x: Slope of 2, y: slope of 1/2
+  assign lines_x[3] = (pix_y_i == (pix_x_i << 1));
+  assign lines_x[2] = (pix_y_i == (XMAX - (pix_x_i << 1)));
+  assign lines_x[1] = (pix_y_i == ((pix_x_i << 1) - XMAX));
+  assign lines_x[0] = (pix_y_i == ((YMAX - pix_x_i) << 1));
+  assign lines_y[3] = (pix_y_i == (pix_x_i >> 1));
+  assign lines_y[2] = (pix_y_i == ((YMAX >> 1) - (pix_x_i >> 1)));
+  assign lines_y[1] = (pix_y_i == ((pix_x_i >> 1) + (YMAX >> 1) + 1));
+  assign lines_y[0] = (pix_y_i == (YMAX - (pix_x_i >> 1)));
+
+  wire [3:0] mini_lines_x, mini_lines_y;
+  assign mini_lines_x[3] = lines_x[3] & (pix_y_i >= ((pix_x_i >> 1) + (YMAX >> 1) + 1)) & in_left_half; // y1
+  assign mini_lines_x[2] = lines_x[2] & (pix_y_i <= ((YMAX >> 1) - (pix_x_i >> 1))) & in_left_half; // y2
+  assign mini_lines_x[1] = lines_x[1] & (pix_y_i <= (pix_x_i >> 1)) & in_right_half; // y3
+  assign mini_lines_x[0] = lines_x[0] & (pix_y_i >= (YMAX - (pix_x_i >> 1))) & in_right_half; // y0
+  assign mini_lines_y[3] = lines_y[3] & (pix_y_i <= ((pix_x_i << 1) - XMAX)) & in_right_half; // x1
+  assign mini_lines_y[2] = lines_y[2] & (pix_y_i <= (XMAX - (pix_x_i << 1))) & in_left_half; // x2
+  assign mini_lines_y[1] = lines_y[1] & (pix_y_i >= (pix_x_i << 1)) & in_left_half; // x3
+  assign mini_lines_y[0] = lines_y[0] & (pix_y_i >= ((YMAX - pix_x_i) << 1)) & in_right_half; // x0
+
+  // Select boundary lines
+  reg selected_lines;
+  always @(*) begin
+    case (angle_i)
+      3'h0:    selected_lines = lines_x[2] | lines_x[1] | (lines_y[1] & in_right_half) | (lines_y[0] & in_left_half);
+      3'h1:    selected_lines = lines_y[2] | lines_x[0] | mini_lines_y[1] | mini_lines_x[3];
+      3'h2:    selected_lines = lines_y[3] | lines_y[0] | (lines_x[3] & in_top_half) | (lines_x[2] & in_bottom_half);
+      3'h3:    selected_lines = lines_y[1] | lines_x[1] | mini_lines_y[2] | mini_lines_x[2];
+      3'h4:    selected_lines = lines_x[3] | lines_x[0] | (lines_y[3] & in_left_half) | (lines_y[2] & in_right_half);
+      3'h5:    selected_lines = lines_x[2] | lines_y[0] | mini_lines_y[3] | mini_lines_x[1];
+      3'h6:    selected_lines = lines_y[2] | lines_y[1] | (lines_x[1] & in_bottom_half) | (lines_x[0] & in_top_half);
+      3'h7:    selected_lines = lines_y[3] | lines_x[3] | mini_lines_y[0] | mini_lines_x[0];
+      default: selected_lines = 1'b0;
+    endcase
+  end // always @(*)
+
+  // Simple hitbox: Inner half by x and y I.E. Center quarter
+  wire in_simple_hitbox;
+  assign in_simple_hitbox = (pix_x_i > (XMAX >> 2)) & ((XMAX - pix_x_i) > (XMAX >> 2)) & 
+                            (pix_y_i > (YMAX >> 2)) & ((YMAX - pix_y_i) > (YMAX >> 2));
+
+  // Assign outputs (WIP)
+  //assign draw_ship_line_o = en_i & (1'b0);
+  assign draw_ship_line_o = en_i & |{lines_x, lines_y};
+  assign in_ship_hitbox_o = en_i & selected_lines;
+  //assign in_ship_hitbox_o = en_i & lines_y[3] * (1'b0);
+  //assign in_ship_hitbox_o = in_simple_hitbox;
+  //assign in_ship_hitbox_o = en_i;
+
+endmodule // simple_ship_vga_manager_offset
