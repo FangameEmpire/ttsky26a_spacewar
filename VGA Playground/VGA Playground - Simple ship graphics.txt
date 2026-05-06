@@ -89,6 +89,31 @@ module tt_um_vga_example (
   assign star_x = 10'd40;
   assign star_y = 10'd10;
 
+  // Gamepad Pmod
+  wire inp_b, inp_y, inp_select, inp_start, inp_up, inp_down, inp_left, inp_right, inp_a, inp_x, inp_l, inp_r;
+
+  gamepad_pmod_single gamepad_driver (
+      // Inputs:
+      .rst_n(rst_n),
+      .clk(clk),
+      .pmod_data(ui_in[6]),
+      .pmod_clk(ui_in[5]),
+      .pmod_latch(ui_in[4]),
+      // Outputs:
+      .b(inp_b),
+      .y(inp_y),
+      .select(inp_select),
+      .start(inp_start),
+      .up(inp_up),
+      .down(inp_down),
+      .left(inp_left),
+      .right(inp_right),
+      .a(inp_a),
+      .x(inp_x),
+      .l(inp_l),
+      .r(inp_r)
+  );
+
   // VGA
   assign R = {2{in_ship_hitbox[0] | in_star_killzone}};
   assign G = {2{draw_ship_line[0]}};

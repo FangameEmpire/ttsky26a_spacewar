@@ -161,7 +161,7 @@ endmodule
 // State[3:2]: 2'b11 = VSYNC, 2'b10 = V_FP, 2'b01 = V_Active, 2'b00 = V_BP
 // State[1:0]: 2'b11 = HSYNC, 2'b10 = H_FP, 2'b01 = H_Active, 2'b00 = H_BP
 // Flags[3:0]: [3] = VMAX, [2] = VMIN, [1] = HMAX, [0] = HMIN
-module hvsync_generator_decoder(hpos, vpos, state, flags);
+module hvsync_generator_decoder(hpos_i, vpos_i, state_o, flags_o, active_edges_o);
 	// Declarations for TV-simulator sync parameters
 	// Horizontal constants
 	parameter H_DISPLAY       = 640; // horizontal display width
@@ -182,28 +182,33 @@ module hvsync_generator_decoder(hpos, vpos, state, flags);
 	parameter V_MAX           = V_DISPLAY + V_TOP + V_BOTTOM + V_SYNC - 1;
 	
 	// Module ports
-	input wire [9:0] hpos, vpos;
-	output wire [3:0] state, flags;
+	input wire [9:0] hpos_i, vpos_i;
+	output wire [3:0] state_o, flags_o;
+  output wire [1:0] active_edges_o;
 	
 	// Intermediate values
 	wire vSYNC, v_FP, v_Active, hSYNC, h_FP, h_Active;
-	assign v_Active = (vpos < V_DISPLAY);
-	assign v_fp = (vpos < V_SYNC_START);
-	assign vSYNC = (vpos < V_SYNC_END + 1);
-	assign h_Active = (hpos < H_DISPLAY);
-	assign h_fp = (hpos < H_SYNC_START);
-	assign hSYNC = (hpos < H_SYNC_END + 1);
+	assign v_Active = (vpos_i < V_DISPLAY);
+	assign v_fp = (vpos_i < V_SYNC_START);
+	assign vSYNC = (vpos_i < V_SYNC_END + 1);
+	assign h_Active = (hpos_i < H_DISPLAY);
+	assign h_fp = (hpos_i < H_SYNC_START);
+	assign hSYNC = (hpos_i < H_SYNC_END + 1);
 	
 	// Find region of VGA frame
-	assign state[3] = vSYNC & ~v_Active; // V_FP or VSYNC
-	assign state[2] = v_fp ? v_Active : vSYNC; // V_BP or V_Active
-	assign state[1] = hSYNC & ~h_Active; // H_FP or HSYNC
-	assign state[0] = h_fp ? h_Active : hSYNC; // H_BP or H_Active
+	assign state_o[3] = vSYNC & ~v_Active; // V_FP or VSYNC
+	assign state_o[2] = v_fp ? v_Active : vSYNC; // V_BP or V_Active
+	assign state_o[1] = hSYNC & ~h_Active; // H_FP or HSYNC
+	assign state_o[0] = h_fp ? h_Active : hSYNC; // H_BP or H_Active
 	
 	// Check X, Y bounds
-	assign flags[3] = (vpos == V_MAX);
-	assign flags[2] = (vpos == 10'b0);
-	assign flags[1] = (hpos == H_MAX);
-	assign flags[0] = (hpos == 10'b0);
+	assign flags_o[3] = (vpos_i == V_MAX);
+	assign flags_o[2] = (vpos_i == 10'b0);
+	assign flags_o[1] = (hpos_i == H_MAX);
+	assign flags_o[0] = (hpos_i == 10'b0);
+
+  // Pulse when the active section of the frame starts and stops
+  assign active_edges_o[1] = (flags_o[2] & flags_o[0]);
+  assign active_edges_o[0] = (vpos_i == V_DISPLAY) & (hpos_i == H_DISPLAY - 1);
 	
 endmodule // hvsync_generator_decoder
