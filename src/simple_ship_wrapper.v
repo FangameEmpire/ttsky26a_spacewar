@@ -30,7 +30,7 @@ module simple_ship_wrapper #(
 
   // VGA manager signals
   wire ship_vga_man_en;
-  wire [5:0] ship_vga_man_x, ship_vga_man_y;
+  wire [4:0] ship_vga_man_x, ship_vga_man_y;
 
   // VGA Graphics
   vga_offset_manager #(.XMAX(WIDTH - 1), .YMAX(HEIGHT - 1)) ship_offset (.en_i, .pix_x_i, .pix_y_i, .object_x_i(x_o), .object_y_i(y_o),

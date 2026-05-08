@@ -62,12 +62,8 @@ module simple_ship_vga_manager #(
   assign in_simple_hitbox = (pix_x_i > (XMAX >> 2)) & ((XMAX - pix_x_i) > (XMAX >> 2)) & 
                             (pix_y_i > (YMAX >> 2)) & ((YMAX - pix_y_i) > (YMAX >> 2));
 
-  // Assign outputs (WIP)
-  //assign draw_ship_line_o = en_i & (1'b0);
-  assign draw_ship_line_o = en_i & |{lines_x, lines_y};
-  assign in_ship_hitbox_o = en_i & selected_lines;
-  //assign in_ship_hitbox_o = en_i & lines_y[3] * (1'b0);
-  //assign in_ship_hitbox_o = in_simple_hitbox;
-  //assign in_ship_hitbox_o = en_i;
+  // Assign outputs
+  assign draw_ship_line_o = en_i & selected_lines;
+  assign in_ship_hitbox_o = in_simple_hitbox;
 
 endmodule // simple_ship_vga_manager

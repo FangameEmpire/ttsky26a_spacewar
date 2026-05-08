@@ -8,8 +8,8 @@ module vga_offset_manager #(
   input [9:0] object_x_i,
   input [9:0] object_y_i,
   output object_en_o,
-  output [5:0] object_x_o,
-  output [5:0] object_y_o
+  output [4:0] object_x_o,
+  output [4:0] object_y_o
 );
 
 // Determine whether the current pixel is within bounds
