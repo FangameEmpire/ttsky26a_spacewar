@@ -14,6 +14,7 @@ module simple_ship_movement_manager #(
   input wire [3:0] cardinal_i,
   input wire [3:0] x_vel_i,
   input wire [3:0] y_vel_i,
+  input wire allow_angle_upd_i,
   input wire update_movement_settings_i,
   output wire [9:0] x_o,
   output wire [9:0] y_o,
@@ -27,14 +28,19 @@ module simple_ship_movement_manager #(
   reg [9:0] x, y;
   reg [2:0] angle;
 
+  // Clean up inputs
+  wire [3:0] cardinal, cardinal_ship;
+  cardinal_directions_cleaner udlr_overlap_cleaner (.cardinal_i, .cardinal_o(cardinal));
+  cardinal_to_spaceship_controls udlr_ship (.thrust_i(cardinal[3]), .angle_i(angle), .cardinal_o(cardinal_ship));
+
   // Calculate potential moves
-  wire [9:0] y_up, y_down, x_left, x_right;
+  reg [9:0] y_up, y_down, x_left, x_right;
 
   always @(*) begin
-    if (x < WIDTH) begin
+    if (x < x_vel_i) begin
       x_left = 0;
       x_right = x + x_vel_i;
-    end else if (x + WIDTH > X_MAX - WIDTH) begin
+    end else if (x > (X_MAX - WIDTH - x_vel_i + 1)) begin
       x_left = x - x_vel_i;
       x_right = X_MAX - WIDTH;
     end else begin
@@ -42,55 +48,71 @@ module simple_ship_movement_manager #(
       x_right = x + x_vel_i;
     end
 
-    if (y < HEIGHT) begin
-      x_left = 0;
-      x_right = x + x_vel_i;
-    end else if (x > Y_MAX - HEIGHT) begin
-      x_left = x - x_vel_i;
-      x_right = X_MAX;
+    if (y < y_vel_i) begin
+      y_up = 0;
+      y_down = y + y_vel_i;
+    end else if (y > (Y_MAX - HEIGHT - x_vel_i + 1)) begin
+      y_up = y - y_vel_i;
+      y_down = Y_MAX - HEIGHT;
     end else begin
-      x_left = x - x_vel_i;
-      x_right = x + x_vel_i;
+      y_up = y - y_vel_i;
+      y_down = y + y_vel_i;
     end
   end // always @(*)
 
   // Movement counters
-  always @(posedge clk) begin
+  always @(posedge clk_i) begin
     if (rst_i) begin
       x <= 0;
       y <= 0;
       angle <= 0;
     end else begin
       if (update_movement_settings_i) begin
-        // Square 0 X
-        if (inp_left && inp_right) begin
-          square_x_0 <= square_x_0;
-        end else if (inp_left & (square_x_0 > 0)) begin
-          square_x_0 <= square_x_0 - 1;
-        end else if (inp_right & (square_x_0 < (X_MAX - WIDTH + 1))) begin
-          square_x_0 <= square_x_0 + 1;
+        // X Coordinate
+        if (load_movement_settings_i) begin
+          x <= load_x_i;
+        end else if (cardinal_ship[1] & (x > 0)) begin
+          x <= x_left;
+        end else if (cardinal_ship[0] & (x < (X_MAX - WIDTH + 1))) begin
+          x <= x_right;
         end else begin
-          square_x_0 <= square_x_0;
+          x <= x;
         end
         
-        // Square 0 Y
-        if (inp_up && inp_down) begin
-          square_y_0 <= square_y_0;
-        end else if (inp_up & (square_y_0 > 0)) begin
-          square_y_0 <= square_y_0 - 1;
-        end else if (inp_down & (square_y_0 < Y_MAX - HEIGHT + 1)) begin
-          square_y_0 <= square_y_0 + 1;
+        // Y Position
+        if (load_movement_settings_i) begin
+          y <= load_y_i;
+        end else if (cardinal_ship[3] & (y > 0)) begin
+          y <= y_up;
+        end else if (cardinal_ship[2] & (y < Y_MAX - HEIGHT + 1)) begin
+          y <= y_down;
         end else begin
-          square_y_0 <= square_y_0;
+          y <= y;
         end
+
+        // Angle
+        if (load_movement_settings_i) begin
+          angle <= load_angle_i;
+        end else if (allow_angle_upd_i & cardinal[1]) begin
+          angle <= angle - 1;
+        end else if (allow_angle_upd_i & cardinal[0]) begin
+          angle <= angle + 1;
+        end else begin
+          angle <= angle;
+        end
+        
       end else begin
-        square_x_0 <= square_x_0;
-        square_y_0 <= square_y_0;
-        square_x_1 <= square_x_1;
-        square_y_1 <= square_y_1;
+        x <= x;
+        y <= y;
+        angle <= angle;
       end
     end
   end // always @(posedge clk)
+
+  // Outputs
+  assign x_o = x;
+  assign y_o = y;
+  assign angle_o = angle;
 
 endmodule // simple_ship_movement_manager
 
@@ -112,7 +134,7 @@ module cardinal_to_spaceship_controls (
 );
 
 // Store movement if movement is requested
-wire cardinal_thrust;
+reg [3:0] cardinal_thrust;
 
 // Convert angle to direction of forward movement for this angle
 always @(*) begin
