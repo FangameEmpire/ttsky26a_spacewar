@@ -40,7 +40,7 @@ module simple_ship_wrapper #(
     .angle_i(angle_o), .draw_ship_line_o, .in_ship_hitbox_o);
 
   // Movement
-  simple_ship_movement_manager #(.WIDTH, .HEIGHT) ship_movement_man (.clk_i, .rst_i, .en_i, .load_x_i, .load_y_i, .load_angle_i,
+  simple_ship_movement_manager #(.WIDTH(WIDTH), .HEIGHT(HEIGHT)) ship_movement_man (.clk_i, .rst_i, .en_i, .load_x_i, .load_y_i, .load_angle_i,
     .load_movement_settings_i, .cardinal_i, .x_vel_i, .y_vel_i, .allow_angle_upd_i,
     .update_movement_settings_i, .x_o, .y_o, .angle_o);
 
