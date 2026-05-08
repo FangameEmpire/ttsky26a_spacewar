@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2024 Uri Shaked
+ * Copyright (c) 2026 Nicklaus Thompson
  * SPDX-License-Identifier: Apache-2.0
  */
 
 `default_nettype none
 
-module tt_um_vga_example (
+module tt_um_spacewar_top (
   input  wire [7:0] ui_in,    // Dedicated inputs
   output wire [7:0] uo_out,   // Dedicated outputs
   input  wire [7:0] uio_in,   // IOs: Input path
@@ -35,26 +35,6 @@ module tt_um_vga_example (
 
   // Suppress unused signals warning
   wire _unused_ok = &{ena, ui_in, uio_in};
-
-  // Generate sync signals
-  hvsync_generator hvsync_gen (
-    .clk(clk),
-    .reset(~rst_n),
-    .hsync(hsync),
-    .vsync(vsync),
-    .display_on(video_active),
-    .hpos(pix_x),
-    .vpos(pix_y)
-  );
-
-  wire [1:0] frame_edges;
-  hvsync_generator_decoder vga_sync_decoder (
-      .hpos_i(pix_x),
-      .vpos_i(pix_y),
-      .state_o(),
-      .flags_o(),
-      .active_edges_o(frame_edges)
-  );
 
   // Always nice to have some counters around
   reg [9:0] counter;
@@ -86,7 +66,6 @@ module tt_um_vga_example (
   wire _unused_ok_ = &{pix_y};
 
   // Ship tests
-  wire ship_vga_man_en_0;
   wire [9:0] ship_x_0, ship_y_0;
   wire [2:0] ship_angle_0;
   wire [1:0] draw_ship_line, in_ship_hitbox;
@@ -148,31 +127,24 @@ module tt_um_vga_example (
   assign G = {2{video_active}} & {2{draw_ship_line[0]}};
   assign B = {2{video_active}} & {2{draw_star}};
 
+  // Generate sync signals
+  hvsync_generator hvsync_gen (
+    .clk(clk),
+    .reset(~rst_n),
+    .hsync(hsync),
+    .vsync(vsync),
+    .display_on(video_active),
+    .hpos(pix_x),
+    .vpos(pix_y)
+  );
+
+  wire [1:0] frame_edges;
+  hvsync_generator_decoder vga_sync_decoder (
+      .hpos_i(pix_x),
+      .vpos_i(pix_y),
+      .state_o(),
+      .flags_o(),
+      .active_edges_o(frame_edges)
+  );
+
 endmodule
-
-module center_star_vga_manager #(
-  XMAX = 5'd31,
-  YMAX = 5'd31
-) (
-  input clk_i,
-  input rst_i,
-  input en_i,
-  input [5:0] pix_x_i,
-  input [5:0] pix_y_i,
-  input [10:0] rng_i,
-  input frame_upd_i,
-  output draw_star_o,
-  output in_star_killzone_o
-);
-
-// Set octagonal bounds
-wire in_bounds;
-assign in_bounds = ((pix_x_i + pix_y_i) >= 6'd08) & ((pix_x_i + pix_y_i) < 6'd55) &
-                   (pix_x_i < (pix_y_i + 6'd24)) & ((pix_x_i + 6'd23) >= pix_y_i);
-
-// Assign outputs (WIP)
-assign draw_star_o = in_bounds;
-assign in_star_killzone_o = (pix_x_i > (XMAX >> 2)) & ((XMAX - pix_x_i) > (XMAX >> 2)) & 
-                            (pix_y_i > (YMAX >> 2)) & ((YMAX - pix_y_i) > (YMAX >> 2));
-
-endmodule // center_star_vga_manager
