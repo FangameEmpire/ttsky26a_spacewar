@@ -1,8 +1,6 @@
 module simple_ship_wrapper #(
   parameter WIDTH = 32,
-  parameter HEIGHT = 32, 
-  localparam XW = $clog2(WIDTH-1),
-  localparam YW = $clog2(HEIGHT-1)
+  parameter HEIGHT = 32
 ) (
   input wire clk_i,
   input wire rst_i,
