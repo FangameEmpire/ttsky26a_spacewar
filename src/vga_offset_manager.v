@@ -21,8 +21,8 @@ assign object_en_o = en_i & within_x & within_y;
 // Get offset VGA pixel coordinates
 wire [9:0] object_x_relative, object_y_relative;
 assign object_x_relative = (pix_x_i - object_x_i);
-assign object_y_relative = pix_y_i - object_y_i;
-assign object_x_o = object_en_o ? object_x_relative[5:0] : 5'b0;
-assign object_y_o = object_en_o ? object_y_relative[5:0] : 5'b0;
+assign object_y_relative = (pix_y_i - object_y_i);
+assign object_x_o = object_en_o ? object_x_relative[4:0] : 5'b0;
+assign object_y_o = object_en_o ? object_y_relative[4:0] : 5'b0;
 
 endmodule // vga_offset_manager
