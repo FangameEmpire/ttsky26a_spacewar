@@ -184,22 +184,22 @@ module hvsync_generator_decoder(hpos_i, vpos_i, state_o, flags_o, active_edges_o
 	// Module ports
 	input wire [9:0] hpos_i, vpos_i;
 	output wire [3:0] state_o, flags_o;
-  output wire [1:0] active_edges_o;
+    output wire [1:0] active_edges_o;
 	
 	// Intermediate values
 	wire vSYNC, v_FP, v_Active, hSYNC, h_FP, h_Active;
 	assign v_Active = (vpos_i < V_DISPLAY);
-	assign v_fp = (vpos_i < V_SYNC_START);
+	assign v_FP = (vpos_i < V_SYNC_START);
 	assign vSYNC = (vpos_i < V_SYNC_END + 1);
 	assign h_Active = (hpos_i < H_DISPLAY);
-	assign h_fp = (hpos_i < H_SYNC_START);
+	assign h_FP = (hpos_i < H_SYNC_START);
 	assign hSYNC = (hpos_i < H_SYNC_END + 1);
 	
 	// Find region of VGA frame
 	assign state_o[3] = vSYNC & ~v_Active; // V_FP or VSYNC
-	assign state_o[2] = v_fp ? v_Active : vSYNC; // V_BP or V_Active
+	assign state_o[2] = v_FP ? v_Active : vSYNC; // V_BP or V_Active
 	assign state_o[1] = hSYNC & ~h_Active; // H_FP or HSYNC
-	assign state_o[0] = h_fp ? h_Active : hSYNC; // H_BP or H_Active
+	assign state_o[0] = h_FP ? h_Active : hSYNC; // H_BP or H_Active
 	
 	// Check X, Y bounds
 	assign flags_o[3] = (vpos_i == V_MAX);
