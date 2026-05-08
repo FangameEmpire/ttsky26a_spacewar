@@ -25,7 +25,7 @@ project:
     - "simple_ship_vga_manager.v"
     - "simple_ship_wrapper.v"
     - "vga_distance_from_center.v"
-    - "vga_offset_manager."
+    - "vga_offset_manager.v"
 
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
