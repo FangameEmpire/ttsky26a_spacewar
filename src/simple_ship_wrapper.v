@@ -1,4 +1,9 @@
-module simple_ship_wrapper (
+module simple_ship_wrapper #(
+  parameter WIDTH = 32,
+  parameter HEIGHT = 32, 
+  localparam XW = $clog2(WIDTH-1),
+  localparam YW = $clog2(HEIGHT-1)
+) (
   input wire clk_i,
   input wire rst_i,
   input wire en_i,
@@ -30,14 +35,14 @@ module simple_ship_wrapper (
   wire [5:0] ship_vga_man_x, ship_vga_man_y;
 
   // VGA Graphics
-  vga_offset_manager ship_offset (.en_i, .pix_x_i, .pix_y_i, .object_x_i(x_o), .object_y_i(y_o),
+  vga_offset_manager #(.XMAX(WIDTH - 1), .YMAX(HEIGHT - 1)) ship_offset (.en_i, .pix_x_i, .pix_y_i, .object_x_i(x_o), .object_y_i(y_o),
     .object_en_o(ship_vga_man_en), .object_x_o(ship_vga_man_x), .object_y_o(ship_vga_man_y));
 
-  simple_ship_vga_manager ship_vga_man (.en_i(ship_vga_man_en), .pix_x_i(ship_vga_man_x), .pix_y_i(ship_vga_man_y),
+  simple_ship_vga_manager #(.XMAX(WIDTH - 1), .YMAX(HEIGHT - 1)) ship_vga_man (.en_i(ship_vga_man_en), .pix_x_i(ship_vga_man_x), .pix_y_i(ship_vga_man_y),
     .angle_i(angle_o), .draw_ship_line_o, .in_ship_hitbox_o);
 
   // Movement
-  simple_ship_movement_manager ship_movement_man (.clk_i, .rst_i, .en_i, .load_x_i, .load_y_i, .load_angle_i,
+  simple_ship_movement_manager #(.WIDTH, .HEIGHT) ship_movement_man (.clk_i, .rst_i, .en_i, .load_x_i, .load_y_i, .load_angle_i,
     .load_movement_settings_i, .cardinal_i, .x_vel_i, .y_vel_i, .allow_angle_upd_i,
     .update_movement_settings_i, .x_o, .y_o, .angle_o);
 

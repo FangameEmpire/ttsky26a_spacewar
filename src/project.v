@@ -72,8 +72,9 @@ module tt_um_spacewar_top (
 
   wire [3:0] default_vel;
   assign default_vel = 4'h7;
+  localparam SHIP_SIZE = 16;
 
-  simple_ship_wrapper ship_wrapper_0 (
+  simple_ship_wrapper #(.WIDTH(SHIP_SIZE), .HEIGHT(SHIP_SIZE)) ship_wrapper_0 (
     .clk_i(clk), .rst_i(~rst_n), .en_i(1'b1), .pix_x_i(pix_x), .pix_y_i(pix_y), .cardinal_i(udlr),
     .load_x_i(10'd255), .load_y_i(10'd130), .load_angle_i(3'h6), .load_movement_settings_i(ui_in[7]),
     .x_vel_i(default_vel), .y_vel_i(default_vel), .allow_angle_upd_i(allow_angle_upd), .update_movement_settings_i(frame_edges[1]),
@@ -147,4 +148,4 @@ module tt_um_spacewar_top (
       .active_edges_o(frame_edges)
   );
 
-endmodule // tt_um_spacewar_top
+endmodule
