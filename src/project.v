@@ -83,6 +83,7 @@ module tt_um_spacewar_top (
   localparam SHIP_SIZE = 16;
 
   wire [1:0] destroy_bullet, do_bullet;
+  assign destroy_bullet = 0;
 
   simple_ship_wrapper #(.WIDTH(SHIP_SIZE), .HEIGHT(SHIP_SIZE), .X_VEL(DEFAULT_VEL), .Y_VEL(DEFAULT_VEL)) ship_wrapper_0 (
     .clk_i(clk), .rst_i(~rst_n), .en_i(1'b1), .pix_x_i(pix_x), .pix_y_i(pix_y), .cardinal_i(udlr_0),
