@@ -12,10 +12,6 @@ module simple_ship_vga_manager #(
   output in_ship_hitbox_o
 );
 
-  // Parameters
-  //localparam XW = $clog2(XMAX);
-  //localparam YW = $clog2(YMAX);
-
   // Quadrants
   wire in_top_half, in_bottom_half, in_left_half, in_right_half;
   assign in_top_half = ~in_bottom_half;
@@ -26,14 +22,14 @@ module simple_ship_vga_manager #(
   // Boundary lines
 
   wire [3:0] lines_x, lines_y; // x: Slope of 2, y: slope of 1/2
-  assign lines_x[3] = (pix_y_i == (pix_x_i << 1));
-  assign lines_x[2] = (pix_y_i == (XMAX - (pix_x_i << 1)));
-  assign lines_x[1] = (pix_y_i == ((pix_x_i << 1) - XMAX));
-  assign lines_x[0] = (pix_y_i == ((YMAX - pix_x_i) << 1));
-  assign lines_y[3] = (pix_y_i == (pix_x_i >> 1));
-  assign lines_y[2] = (pix_y_i == ((YMAX >> 1) - (pix_x_i >> 1)));
-  assign lines_y[1] = (pix_y_i == ((pix_x_i >> 1) + (YMAX >> 1) + 1));
-  assign lines_y[0] = (pix_y_i == (YMAX - (pix_x_i >> 1)));
+  assign lines_x[3] = ((pix_y_i >> 1) == pix_x_i);
+  assign lines_x[2] = ((pix_y_i >> 1) == ((XMAX >> 1) - pix_x_i));
+  assign lines_x[1] = ((pix_y_i >> 1) == (pix_x_i - (XMAX >> 1) - 1));
+  assign lines_x[0] = ((pix_y_i >> 1) == (XMAX - pix_x_i));
+  assign lines_y[3] = ((pix_x_i >> 1) == pix_y_i);
+  assign lines_y[2] = ((pix_x_i >> 1) == ((YMAX >> 1) - pix_y_i));
+  assign lines_y[1] = ((pix_x_i >> 1) == (pix_y_i - (YMAX >> 1) - 1));
+  assign lines_y[0] = ((pix_x_i >> 1) == (YMAX - pix_y_i));
 
   wire [3:0] mini_lines_x, mini_lines_y;
   assign mini_lines_x[3] = lines_x[3] & (pix_y_i >= ((pix_x_i >> 1) + (YMAX >> 1) + 1)) & in_left_half; // y1
