@@ -110,14 +110,14 @@ module tt_um_spacewar_top (
   if (~rst_n) begin
     load_ship_gamestart <= 1'b0;
     game_started <= 1'b0;
-  end else if (~game_started) begin
+  end else if (~game_started & ~load_ship_gamestart) begin
     load_ship_gamestart <= 1'b1;
     game_started <= 1'b0;
   end else if (frame_edges[1]) begin
     load_ship_gamestart <= 1'b0;
     game_started <= 1'b1;
   end else begin
-    load_ship_gamestart <= 1'b0;
+    load_ship_gamestart <= load_ship_gamestart;
     game_started <= game_started;
   end
 end
@@ -133,8 +133,8 @@ end
   center_star_vga_manager star_man (.clk_i(clk), .rst_i(~rst_n), .en_i(1'b1), .en_vga_i(star_man_en_0), .pix_x_i(star_man_x_0), .pix_y_i(star_man_y_0),
     .rng_i(rng[2:0]), .frame_upd_i(frame_edges[1]), .draw_star_o(draw_star), .in_star_killzone_o(in_star_killzone));
 
-  assign star_x = 10'd160; // 640 >> 2
-  assign star_y = 10'd120; // 480 >> 2
+  assign star_x = 10'd144; // (640 - 64) >> 2
+  assign star_y = 10'd104; // (480 - 64) >> 2
 
   // Noise generator
   wire [12:0] rng;
