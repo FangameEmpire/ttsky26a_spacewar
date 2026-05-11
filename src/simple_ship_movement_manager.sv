@@ -21,8 +21,8 @@ module simple_ship_movement_manager #(
   output wire [2:0] angle_o
 );
   // Store parameters
-  parameter X_MAX = (640 - 1);
-  parameter Y_MAX = (480 - 1);
+  localparam X_MAX = (640 - 1);
+  localparam Y_MAX = (480 - 1);
 
   // Store internal copies of position and angle
   reg [9:0] x, y;
