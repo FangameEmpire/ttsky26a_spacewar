@@ -102,15 +102,15 @@ module tt_um_spacewar_top (
   wire star_man_en_0;
   wire [9:0] star_x, star_y;
   wire [5:0] star_man_x_0, star_man_y_0;
-  vga_offset_manager star_offset (.en_i(1'b1), .pix_x_i(pix_x >> 3), .pix_y_i(pix_y >> 3), .object_x_i(star_x), .object_y_i(star_y),
+  vga_offset_manager star_offset (.en_i(1'b1), .pix_x_i(pix_x >> 1), .pix_y_i(pix_y >> 1), .object_x_i(star_x), .object_y_i(star_y),
     .object_en_o(star_man_en_0), .object_x_o(star_man_x_0), .object_y_o(star_man_y_0));
   
   wire draw_star, in_star_killzone;
-  center_star_vga_manager star_man (.clk_i(clk), .rst_i(~rst_n), .en_i(star_man_en_0), .pix_x_i(star_man_x_0), .pix_y_i(star_man_y_0),
-    .rng_i(rng), .frame_upd_i(frame_edges[1]), .draw_star_o(draw_star), .in_star_killzone_o(in_star_killzone));
+  center_star_vga_manager star_man (.clk_i(clk), .rst_i(~rst_n), .en_i(1'b1), .en_vga_i(star_man_en_0), .pix_x_i(star_man_x_0), .pix_y_i(star_man_y_0),
+    .rng_i(rng[2:0]), .frame_upd_i(frame_edges[1]), .draw_star_o(draw_star), .in_star_killzone_o(in_star_killzone));
 
-  assign star_x = 10'd40;
-  assign star_y = 10'd10;
+  assign star_x = 10'd160; // 640 >> 2
+  assign star_y = 10'd120; // 480 >> 2
 
   // Noise generator
   wire [12:0] rng;
@@ -149,7 +149,7 @@ module tt_um_spacewar_top (
   );
 
   // VGA
-  assign R = {2{video_active}} & {2{(dbg_show_hitboxes & |in_ship_hitbox) | in_star_killzone}};
+  assign R = {2{video_active}} & {2{(dbg_show_hitboxes & (|in_ship_hitbox | in_star_killzone))}};
   assign G = {2{video_active}} & {2{|draw_ship_line}};
   assign B = {2{video_active}} & {2{draw_star}};
 
