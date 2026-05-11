@@ -1,5 +1,6 @@
 module vga_distance_from_center #(
   RESOLUTION = 5
+  parameter VGA_WIDTH = 10;
 ) (
   input en_i,
   input [VGA_WIDTH-1:0] pix_x_i,
@@ -9,9 +10,6 @@ module vga_distance_from_center #(
   output [RESOLUTION-1:0] max_distance_x_o,
   output [RESOLUTION-1:0] max_distance_y_o
 );
-
-// Parameters
-localparam VGA_WIDTH = 10;
 
 // Store midpoint
 localparam [VGA_WIDTH-1:0] x_mid = 320;

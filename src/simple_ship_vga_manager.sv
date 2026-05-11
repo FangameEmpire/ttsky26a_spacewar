@@ -1,6 +1,8 @@
 module simple_ship_vga_manager #(
   parameter XMAX = 5'd31,
-  parameter YMAX = 5'd31
+  parameter YMAX = 5'd31,
+  parameter XW = $clog2(XMAX),
+  parameter YW = $clog2(YMAX)
 ) (
   input en_i,
   input [XW:0] pix_x_i,
@@ -11,8 +13,8 @@ module simple_ship_vga_manager #(
 );
 
   // Parameters
-  localparam XW = $clog2(XMAX);
-  localparam YW = $clog2(YMAX);
+  //localparam XW = $clog2(XMAX);
+  //localparam YW = $clog2(YMAX);
 
   // Quadrants
   wire in_top_half, in_bottom_half, in_left_half, in_right_half;
