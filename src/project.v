@@ -83,7 +83,7 @@ module tt_um_spacewar_top (
   localparam SHIP_SIZE = 16;
 
   wire [1:0] destroy_bullet, do_bullet;
-  assign destroy_bullet = 0;
+  assign destroy_bullet = {load_ship_revive_q[0], load_ship_revive_q[1]};
 
   simple_ship_wrapper #(.WIDTH(SHIP_SIZE), .HEIGHT(SHIP_SIZE), .X_VEL(DEFAULT_VEL), .Y_VEL(DEFAULT_VEL)) ship_wrapper_0 (
     .clk_i(clk), .rst_i(~rst_n), .en_i(1'b1), .pix_x_i(pix_x), .pix_y_i(pix_y), .cardinal_i(udlr_0),
@@ -105,26 +105,39 @@ module tt_um_spacewar_top (
 
   // Ship death and reload handler
   wire [1:0] load_ship, load_ship_revive;
+  reg [1:0] load_ship_revive_q;
   reg load_ship_gamestart, game_started;
-  assign load_ship = {2{ui_in[7] | load_ship_gamestart}} | load_ship_revive;
-  assign load_ship_revive = 0;
+  assign load_ship = {2{ui_in[7] | load_ship_gamestart}} | load_ship_revive_q;
+  assign load_ship_revive = in_ship_hitbox & ({do_bullet[0], do_bullet[1]} | {2{in_star_killzone}});
+
+  always @(posedge clk) begin
+    if (~rst_n) begin
+      load_ship_revive_q <= 2'b0;
+    end else if (|load_ship_revive) begin
+      load_ship_revive_q <= load_ship_revive | load_ship_revive_q;
+    end else if (frame_edges[1]) begin
+      load_ship_revive_q <= 2'b0;
+    end else begin
+      load_ship_revive_q <= load_ship_revive_q;
+    end
+  end
 
   // Game start reload generator
   always @(posedge clk) begin
-  if (~rst_n) begin
-    load_ship_gamestart <= 1'b0;
-    game_started <= 1'b0;
-  end else if (~game_started & ~load_ship_gamestart) begin
-    load_ship_gamestart <= 1'b1;
-    game_started <= 1'b0;
-  end else if (frame_edges[1]) begin
-    load_ship_gamestart <= 1'b0;
-    game_started <= 1'b1;
-  end else begin
-    load_ship_gamestart <= load_ship_gamestart;
-    game_started <= game_started;
+    if (~rst_n) begin
+      load_ship_gamestart <= 1'b0;
+      game_started <= 1'b0;
+    end else if (~game_started & ~load_ship_gamestart) begin
+      load_ship_gamestart <= 1'b1;
+      game_started <= 1'b0;
+    end else if (frame_edges[1]) begin
+      load_ship_gamestart <= 1'b0;
+      game_started <= 1'b1;
+    end else begin
+      load_ship_gamestart <= load_ship_gamestart;
+      game_started <= game_started;
+    end
   end
-end
 
   // Star tests
   wire star_man_en_0;
@@ -178,10 +191,10 @@ end
 
   // Green and multicolor VGA signals
   wire [1:0] R_greenonly, G_greenonly, B_greenonly, R_multicolor, G_multicolor, B_multicolor;
-  assign R_greenonly = {2{(dbg_show_hitboxes & (|in_ship_hitbox | in_star_killzone) | |do_bullet)}};
+  assign R_greenonly = {2{(dbg_show_hitboxes & (|in_ship_hitbox | in_star_killzone | |do_bullet))}};
   assign G_greenonly = G_multicolor | B_multicolor;
   assign B_greenonly = 2'b0;
-  assign R_multicolor = R_greenonly | {2{1'b0}}; // TODO: Explosions
+  assign R_multicolor = R_greenonly | {2{|do_bullet}} | {2{1'b0}}; // TODO: Explosions
   assign G_multicolor = {2{|draw_ship_line | (|do_bullet & ~dbg_show_hitboxes)}}; // TODO: Explosions
   assign B_multicolor = {2{draw_star | (|do_bullet & ~dbg_show_hitboxes)}};
 

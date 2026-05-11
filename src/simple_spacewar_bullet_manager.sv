@@ -1,3 +1,5 @@
+`default_nettype none
+
 module simple_spacewar_bullet_manager #(
   XMAX = 5'd31,
   YMAX = 5'd31,
