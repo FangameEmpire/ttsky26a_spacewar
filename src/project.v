@@ -107,7 +107,7 @@ module tt_um_spacewar_top (
   
   wire draw_star, in_star_killzone;
   center_star_vga_manager star_man (.clk_i(clk), .rst_i(~rst_n), .en_i(star_man_en_0), .pix_x_i(star_man_x_0), .pix_y_i(star_man_y_0),
-    .rng_i(10'b0), .frame_upd_i(1'b0), .draw_star_o(draw_star), .in_star_killzone_o(in_star_killzone));
+    .rng_i(rng), .frame_upd_i(frame_edges[1]), .draw_star_o(draw_star), .in_star_killzone_o(in_star_killzone));
 
   assign star_x = 10'd40;
   assign star_y = 10'd10;
