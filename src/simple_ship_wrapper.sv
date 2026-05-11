@@ -17,8 +17,6 @@ module simple_ship_wrapper #(
   input wire [2:0] load_angle_i,
   input wire       load_movement_settings_i,
   
-  input wire [3:0] x_vel_i,
-  input wire [3:0] y_vel_i,
   input wire       allow_angle_upd_i,
   input wire       update_movement_settings_i,
 
@@ -45,7 +43,8 @@ module simple_ship_wrapper #(
     .angle_i(angle_o), .draw_ship_line_o, .in_ship_hitbox_o);
 
   // Movement
-  simple_ship_movement_manager #(.WIDTH(WIDTH), .HEIGHT(HEIGHT), .X_VEL(X_VEL), .Y_VEL(Y_VEL)) ship_movement_man (.clk_i, .rst_i, .en_i, .load_x_i, .load_y_i, .load_angle_i,
+  simple_ship_movement_manager #(.WIDTH(WIDTH), .HEIGHT(HEIGHT), .X_VEL(X_VEL), .Y_VEL(Y_VEL)) ship_movement_man (
+    .clk_i, .rst_i, .en_i, .load_x_i, .load_y_i, .load_angle_i,
     .load_movement_settings_i, .cardinal_i, .allow_angle_upd_i,
     .update_movement_settings_i, .x_o, .y_o, .angle_o);
 
