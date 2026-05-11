@@ -16,9 +16,6 @@ module tt_um_spacewar_top (
   input  wire       rst_n     // reset_n - low to reset
 );
 
-  // Defines
-  //`define HVSYNC_50MHZ // Allow 50 MHz operation by slowing down the HVsync generator.
-
   // VGA signals
   wire hsync;
   wire vsync;
@@ -146,14 +143,13 @@ module tt_um_spacewar_top (
 
   // VGA
   assign R = {2{video_active}} & {2{(ui_in[3] & |in_ship_hitbox) | in_star_killzone}};
-  assign G = {2{video_active}} & {2{|draw_ship_line}};
+  assign G = {2{1'b1}} & {2{|draw_ship_line}};
   assign B = {2{video_active}} & {2{draw_star}};
 
   // Audio
-  assign uio_out[7] = audio_gun;
+  assign uio_out[7] = audio_gun & inp_l;
 
   // Generate sync signals
-  `ifndef HVSYNC_50MHZ
   hvsync_generator hvsync_gen (
     .clk(clk),
     .reset(~rst_n),
@@ -163,18 +159,6 @@ module tt_um_spacewar_top (
     .hpos(pix_x),
     .vpos(pix_y)
   );
-  `else
-  hvsync_generator_enabled hvsync_gen_en (
-    .clk(clk),
-    .reset(~rst_n),
-    .en(counter[0]),
-    .hsync(hsync),
-    .vsync(vsync),
-    .display_on(video_active),
-    .hpos(pix_x),
-    .vpos(pix_y)
-  );
-  `endif
 
   wire [1:0] frame_edges;
   hvsync_generator_decoder vga_sync_decoder (
