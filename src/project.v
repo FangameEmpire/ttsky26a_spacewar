@@ -16,6 +16,11 @@ module tt_um_spacewar_top (
   input  wire       rst_n     // reset_n - low to reset
 );
 
+  // Debug inputs
+  wire dbg_share_ctrl0, dbg_show_hitboxes;
+  assign dbg_share_ctrl0 = ui_in[0];
+  assign dbg_show_hitboxes = ui_in[1];
+
   // VGA signals
   wire hsync;
   wire vsync;
@@ -78,7 +83,7 @@ module tt_um_spacewar_top (
   localparam SHIP_SIZE = 16;
 
   simple_ship_wrapper #(.WIDTH(SHIP_SIZE), .HEIGHT(SHIP_SIZE)) ship_wrapper_0 (
-    .clk_i(clk), .rst_i(~rst_n), .en_i(1'b1), .pix_x_i(pix_x), .pix_y_i(pix_y), .cardinal_i(udlr),
+    .clk_i(clk), .rst_i(~rst_n), .en_i(1'b1), .pix_x_i(pix_x), .pix_y_i(pix_y), .cardinal_i(udlr_0),
     .load_x_i(10'd255), .load_y_i(10'd130), .load_angle_i(3'h6), .load_movement_settings_i(ui_in[7]),
     .x_vel_i(default_vel), .y_vel_i(default_vel), .allow_angle_upd_i(allow_angle_upd), .update_movement_settings_i(frame_edges[1]),
     .x_o(ship_x_0), .y_o(ship_y_0), .angle_o(ship_angle_0),
@@ -86,7 +91,7 @@ module tt_um_spacewar_top (
   );
 
   simple_ship_wrapper #(.WIDTH(SHIP_SIZE), .HEIGHT(SHIP_SIZE)) ship_wrapper_1 (
-    .clk_i(clk), .rst_i(~rst_n), .en_i(1'b1), .pix_x_i(pix_x), .pix_y_i(pix_y), .cardinal_i(xbya),
+    .clk_i(clk), .rst_i(~rst_n), .en_i(1'b1), .pix_x_i(pix_x), .pix_y_i(pix_y), .cardinal_i(dbg_share_ctrl0 ? xbya_0 : udlr_1),
     .load_x_i(10'd100), .load_y_i(10'd250), .load_angle_i(3'h2), .load_movement_settings_i(ui_in[7]),
     .x_vel_i(default_vel), .y_vel_i(default_vel), .allow_angle_upd_i(allow_angle_upd), .update_movement_settings_i(frame_edges[1]),
     .x_o(ship_x_1), .y_o(ship_y_1), .angle_o(ship_angle_1),
@@ -114,12 +119,14 @@ module tt_um_spacewar_top (
     .gun_o(audio_gun), .thrust_o(audio_thrust), .death_o(audio_death));
 
   // Gamepad Pmod
-  wire inp_b, inp_y, inp_select, inp_start, inp_up, inp_down, inp_left, inp_right, inp_a, inp_x, inp_l, inp_r;
-  wire [3:0] udlr, xbya;
-  assign udlr = {inp_up, inp_down, inp_left, inp_right};
-  assign xbya = {inp_x, inp_b, inp_y, inp_a};
+  wire [1:0] inp_b, inp_y, inp_select, inp_start, inp_up, inp_down, inp_left, inp_right, inp_a, inp_x, inp_l, inp_r;
+  wire [3:0] udlr_0, udlr_1, xbya_0, xbya_1;
+  assign udlr_0 = {inp_up[0], inp_down[0], inp_left[0], inp_right[0]};
+  assign udlr_1 = {inp_up[1], inp_down[1], inp_left[1], inp_right[1]};
+  assign xbya_0 = {inp_x[0], inp_b[0], inp_y[0], inp_a[0]};
+  assign xbya_1 = {inp_x[1], inp_b[1], inp_y[1], inp_a[1]};
 
-  gamepad_pmod_single gamepad_driver (
+  gamepad_pmod_dual gamepad_driver (
       // Inputs:
       .rst_n(rst_n),
       .clk(clk),
@@ -142,8 +149,8 @@ module tt_um_spacewar_top (
   );
 
   // VGA
-  assign R = {2{video_active}} & {2{(ui_in[3] & |in_ship_hitbox) | in_star_killzone}};
-  assign G = {2{1'b1}} & {2{|draw_ship_line}};
+  assign R = {2{video_active}} & {2{(dbg_show_hitboxes & |in_ship_hitbox) | in_star_killzone}};
+  assign G = {2{video_active}} & {2{|draw_ship_line}};
   assign B = {2{video_active}} & {2{draw_star}};
 
   // Audio
