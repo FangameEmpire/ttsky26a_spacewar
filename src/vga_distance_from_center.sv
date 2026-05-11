@@ -1,6 +1,6 @@
 module vga_distance_from_center #(
-  RESOLUTION = 5
-  parameter VGA_WIDTH = 10;
+  RESOLUTION = 5,
+  VGA_WIDTH = 10
 ) (
   input en_i,
   input [VGA_WIDTH-1:0] pix_x_i,
