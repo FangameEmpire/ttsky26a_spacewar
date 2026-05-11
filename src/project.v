@@ -17,9 +17,10 @@ module tt_um_spacewar_top (
 );
 
   // Debug inputs
-  wire dbg_share_ctrl0, dbg_show_hitboxes;
+  wire dbg_share_ctrl0, dbg_show_hitboxes, dbg_greenonly;
   assign dbg_share_ctrl0 = ui_in[0];
   assign dbg_show_hitboxes = ui_in[1];
+  assign dbg_greenonly = ui_in[2];
 
   // VGA signals
   wire hsync;
@@ -171,10 +172,19 @@ end
       .r(inp_r)
   );
 
+  // Green and multicolor VGA signals
+  wire [1:0] R_greenonly, G_greenonly, B_greenonly, R_multicolor, G_multicolor, B_multicolor;
+  assign R_greenonly = {2{(dbg_show_hitboxes & (|in_ship_hitbox | in_star_killzone))}};
+  assign G_greenonly = G_multicolor | B_multicolor;
+  assign B_greenonly = 2'b0;
+  assign R_multicolor = {2{(dbg_show_hitboxes & (|in_ship_hitbox | in_star_killzone))}}; // TODO: Bullets, Explosions
+  assign G_multicolor = {2{|draw_ship_line}}; // TODO: Bullets, Explosions
+  assign B_multicolor = {2{draw_star}}; // TODO: Bullets
+
   // VGA
-  assign R = {2{video_active}} & {2{(dbg_show_hitboxes & (|in_ship_hitbox | in_star_killzone))}};
-  assign G = {2{video_active}} & {2{|draw_ship_line}};
-  assign B = {2{video_active}} & {2{draw_star}};
+  assign R = {2{video_active}} & (dbg_greenonly ? R_greenonly : R_multicolor);
+  assign G = {2{video_active}} & (dbg_greenonly ? G_greenonly : G_multicolor);
+  assign B = {2{video_active}} & (dbg_greenonly ? B_greenonly : B_multicolor);
 
   // Audio
   assign uio_out[7] = audio_gun & inp_l;
