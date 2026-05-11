@@ -25,7 +25,7 @@ project:
     - "simple_ship_vga_manager.sv"
     - "simple_ship_wrapper.sv"
     - "spacewar_noise_generator.v"
-    - "vga_distance_from_center.v"
+    - "vga_distance_from_center.sv"
     - "vga_offset_manager.sv"
 
 
