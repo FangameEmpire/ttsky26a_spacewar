@@ -84,7 +84,7 @@ module tt_um_spacewar_top (
 
   simple_ship_wrapper #(.WIDTH(SHIP_SIZE), .HEIGHT(SHIP_SIZE)) ship_wrapper_0 (
     .clk_i(clk), .rst_i(~rst_n), .en_i(1'b1), .pix_x_i(pix_x), .pix_y_i(pix_y), .cardinal_i(udlr_0),
-    .load_x_i(10'd255), .load_y_i(10'd130), .load_angle_i(3'h6), .load_movement_settings_i(ui_in[7]),
+    .load_x_i(10'd480), .load_y_i(10'd120), .load_angle_i(3'h6), .load_movement_settings_i(load_ship[0]),
     .x_vel_i(default_vel), .y_vel_i(default_vel), .allow_angle_upd_i(allow_angle_upd), .update_movement_settings_i(frame_edges[1]),
     .x_o(ship_x_0), .y_o(ship_y_0), .angle_o(ship_angle_0),
     .draw_ship_line_o(draw_ship_line[0]), .in_ship_hitbox_o(in_ship_hitbox[0])
@@ -92,11 +92,34 @@ module tt_um_spacewar_top (
 
   simple_ship_wrapper #(.WIDTH(SHIP_SIZE), .HEIGHT(SHIP_SIZE)) ship_wrapper_1 (
     .clk_i(clk), .rst_i(~rst_n), .en_i(1'b1), .pix_x_i(pix_x), .pix_y_i(pix_y), .cardinal_i(dbg_share_ctrl0 ? xbya_0 : udlr_1),
-    .load_x_i(10'd100), .load_y_i(10'd250), .load_angle_i(3'h2), .load_movement_settings_i(ui_in[7]),
+    .load_x_i(10'd160), .load_y_i(10'd360), .load_angle_i(3'h2), .load_movement_settings_i(load_ship[1]),
     .x_vel_i(default_vel), .y_vel_i(default_vel), .allow_angle_upd_i(allow_angle_upd), .update_movement_settings_i(frame_edges[1]),
     .x_o(ship_x_1), .y_o(ship_y_1), .angle_o(ship_angle_1),
     .draw_ship_line_o(draw_ship_line[1]), .in_ship_hitbox_o(in_ship_hitbox[1])
   );
+
+  // Ship death and reload handler
+  wire [1:0] load_ship, load_ship_revive;
+  reg load_ship_gamestart, game_started;
+  assign load_ship = {2{ui_in[7] | load_ship_gamestart}} | load_ship_revive;
+  assign load_ship_revive = 0;
+
+  // Game start reload generator
+  always @(posedge clk) begin
+  if (~rst_n) begin
+    load_ship_gamestart <= 1'b0;
+    game_started <= 1'b0;
+  end else if (~game_started) begin
+    load_ship_gamestart <= 1'b1;
+    game_started <= 1'b0;
+  end else if (frame_edges[1]) begin
+    load_ship_gamestart <= 1'b0;
+    game_started <= 1'b1;
+  end else begin
+    load_ship_gamestart <= 1'b0;
+    game_started <= game_started;
+  end
+end
 
   // Star tests
   wire star_man_en_0;
