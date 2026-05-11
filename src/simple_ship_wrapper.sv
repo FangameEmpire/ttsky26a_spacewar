@@ -16,7 +16,7 @@ module simple_ship_wrapper #(
   input wire [9:0] load_y_i,
   input wire [2:0] load_angle_i,
   input wire       load_movement_settings_i,
-  
+
   input wire       allow_angle_upd_i,
   input wire       update_movement_settings_i,
 

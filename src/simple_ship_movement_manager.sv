@@ -1,8 +1,6 @@
 module simple_ship_movement_manager #(
   parameter WIDTH = 32,
   parameter HEIGHT = 32,
-  parameter XW = $clog2(WIDTH-1),
-  parameter YW = $clog2(HEIGHT-1),
   parameter X_VEL = 4'h7,
   parameter Y_VEL = 4'h7
 ) (
@@ -29,7 +27,7 @@ module simple_ship_movement_manager #(
   reg [2:0] angle;
 
   // Clean up inputs
-  wire [3:0] cardinal, cardinal_nodown, cardinal_ship;
+  wire [3:0] cardinal_nodown, cardinal, cardinal_ship;
   cardinal_down_remover down_remover (.cardinal_i, .cardinal_o(cardinal_nodown));
   cardinal_directions_cleaner udlr_overlap_cleaner (.cardinal_i(cardinal_nodown), .cardinal_o(cardinal));
   cardinal_to_spaceship_controls udlr_ship (.thrust_i(cardinal[3]), .angle_i(angle), .cardinal_o(cardinal_ship));
