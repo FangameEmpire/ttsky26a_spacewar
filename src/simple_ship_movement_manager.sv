@@ -1,8 +1,6 @@
 module simple_ship_movement_manager #(
   parameter WIDTH = 32,
   parameter HEIGHT = 32,
-  parameter XW = $clog2(WIDTH-1),
-  parameter YW = $clog2(HEIGHT-1),
   parameter X_VEL = 4'h7,
   parameter Y_VEL = 4'h7
 ) (
