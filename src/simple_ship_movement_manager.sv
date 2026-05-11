@@ -1,6 +1,10 @@
 module simple_ship_movement_manager #(
   parameter WIDTH = 32,
-  parameter HEIGHT = 32
+  parameter HEIGHT = 32,
+  parameter XW = $clog2(WIDTH-1),
+  parameter YW = $clog2(HEIGHT-1),
+  parameter X_VEL = 4'h7,
+  parameter Y_VEL = 4'h7
 ) (
   input wire clk_i,
   input wire rst_i,
@@ -10,8 +14,6 @@ module simple_ship_movement_manager #(
   input wire [2:0] load_angle_i,
   input wire load_movement_settings_i,
   input wire [3:0] cardinal_i,
-  input wire [3:0] x_vel_i,
-  input wire [3:0] y_vel_i,
   input wire allow_angle_upd_i,
   input wire update_movement_settings_i,
   output wire [9:0] x_o,
@@ -19,44 +21,43 @@ module simple_ship_movement_manager #(
   output wire [2:0] angle_o
 );
   // Store parameters
-  localparam XW = $clog2(WIDTH-1);
-  localparam YW = $clog2(HEIGHT-1);
-  localparam X_MAX = (640 - 1);
-  localparam Y_MAX = (480 - 1);
+  parameter X_MAX = (640 - 1);
+  parameter Y_MAX = (480 - 1);
 
   // Store internal copies of position and angle
   reg [9:0] x, y;
   reg [2:0] angle;
 
   // Clean up inputs
-  wire [3:0] cardinal, cardinal_ship;
-  cardinal_directions_cleaner udlr_overlap_cleaner (.cardinal_i, .cardinal_o(cardinal));
+  wire [3:0] cardinal, cardinal_nodown, cardinal_ship;
+  cardinal_down_remover down_remover (.cardinal_i, .cardinal_o(cardinal_nodown));
+  cardinal_directions_cleaner udlr_overlap_cleaner (.cardinal_i(cardinal_nodown), .cardinal_o(cardinal));
   cardinal_to_spaceship_controls udlr_ship (.thrust_i(cardinal[3]), .angle_i(angle), .cardinal_o(cardinal_ship));
 
   // Calculate potential moves
   reg [9:0] y_up, y_down, x_left, x_right;
 
   always @(*) begin
-    if (x < x_vel_i) begin
+    if (x < X_VEL) begin
       x_left = 0;
-      x_right = x + x_vel_i;
-    end else if (x > (X_MAX - WIDTH - x_vel_i + 1)) begin
-      x_left = x - x_vel_i;
+      x_right = x + X_VEL;
+    end else if (x > (X_MAX - WIDTH - X_VEL + 1)) begin
+      x_left = x - X_VEL;
       x_right = X_MAX - WIDTH;
     end else begin
-      x_left = x - x_vel_i;
-      x_right = x + x_vel_i;
+      x_left = x - X_VEL;
+      x_right = x + X_VEL;
     end
 
-    if (y < y_vel_i) begin
+    if (y < Y_VEL) begin
       y_up = 0;
-      y_down = y + y_vel_i;
-    end else if (y > (Y_MAX - HEIGHT - x_vel_i + 1)) begin
-      y_up = y - y_vel_i;
+      y_down = y + Y_VEL;
+    end else if (y > (Y_MAX - HEIGHT - Y_VEL + 1)) begin
+      y_up = y - Y_VEL;
       y_down = Y_MAX - HEIGHT;
     end else begin
-      y_up = y - y_vel_i;
-      y_down = y + y_vel_i;
+      y_up = y - Y_VEL;
+      y_down = y + Y_VEL;
     end
   end // always @(*)
 
@@ -67,7 +68,7 @@ module simple_ship_movement_manager #(
       y <= 0;
       angle <= 0;
     end else begin
-      if (update_movement_settings_i) begin
+      if (en_i & update_movement_settings_i) begin
         // X Coordinate
         if (load_movement_settings_i) begin
           x <= load_x_i;
@@ -115,6 +116,15 @@ module simple_ship_movement_manager #(
   assign angle_o = angle;
 
 endmodule // simple_ship_movement_manager
+
+module cardinal_down_remover (
+  input wire [3:0] cardinal_i,
+  output wire [3:0] cardinal_o
+);
+
+  assign cardinal_o = {cardinal_i[3], 1'b0, cardinal_i[1:0]};
+
+endmodule // cardinal_down_remover
 
 module cardinal_directions_cleaner (
   input wire [3:0] cardinal_i,

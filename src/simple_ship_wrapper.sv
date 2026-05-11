@@ -1,6 +1,8 @@
 module simple_ship_wrapper #(
   parameter WIDTH = 32,
-  parameter HEIGHT = 32
+  parameter HEIGHT = 32,
+  parameter X_VEL = 4'h7,
+  parameter Y_VEL = 4'h7
 ) (
   input wire clk_i,
   input wire rst_i,
@@ -25,7 +27,10 @@ module simple_ship_wrapper #(
   output wire [2:0] angle_o,
 
   output wire draw_ship_line_o,
-  output wire in_ship_hitbox_o
+  output wire in_ship_hitbox_o,
+
+  input wire destroy_bullet_i,
+  output wire do_bullet_o
 );
 
   // VGA manager signals
@@ -40,8 +45,8 @@ module simple_ship_wrapper #(
     .angle_i(angle_o), .draw_ship_line_o, .in_ship_hitbox_o);
 
   // Movement
-  simple_ship_movement_manager #(.WIDTH(WIDTH), .HEIGHT(HEIGHT)) ship_movement_man (.clk_i, .rst_i, .en_i, .load_x_i, .load_y_i, .load_angle_i,
-    .load_movement_settings_i, .cardinal_i, .x_vel_i, .y_vel_i, .allow_angle_upd_i,
+  simple_ship_movement_manager #(.WIDTH(WIDTH), .HEIGHT(HEIGHT), .X_VEL(X_VEL), .Y_VEL(Y_VEL)) ship_movement_man (.clk_i, .rst_i, .en_i, .load_x_i, .load_y_i, .load_angle_i,
+    .load_movement_settings_i, .cardinal_i, .allow_angle_upd_i,
     .update_movement_settings_i, .x_o, .y_o, .angle_o);
 
   // Gravity and Velocity
@@ -49,6 +54,10 @@ module simple_ship_wrapper #(
   // Death
 
   // Gun
+  simple_spacewar_bullet_manager #(.XMAX(WIDTH - 1), .YMAX(HEIGHT - 0), .X_VEL(X_VEL << 0), .Y_VEL(Y_VEL << 0)) bullet_man (
+    .clk_i, .rst_i, .en_i, .pix_x_i, .pix_y_i,
+    .ship_x_i(x_o), .ship_y_i(y_o), .ship_angle_i(angle_o), .update_movement_settings_i,
+    .bullet_request_i(cardinal_i[2]), .destroy_bullet_i, .do_bullet_o);
 
   // Audio
 
