@@ -6,7 +6,7 @@ SIM ?= icarus
 FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = project.v hvsync_generator.v gamepad_pmod.v center_star_vga_manager.v simple_ship_movement_manager.v simple_ship_vga_manager.v simple_ship_wrapper.v vga_distance_from_center.v vga_offset_manager.v
+PROJECT_SOURCES = project.v hvsync_generator.v gamepad_pmod.v center_star_vga_manager.sv simple_ship_movement_manager.sv simple_ship_vga_manager.sv simple_ship_wrapper.sv spacewar_noise_generator.v vga_distance_from_center.v vga_offset_manager.sv
 
 ifneq ($(GATES),yes)
 
