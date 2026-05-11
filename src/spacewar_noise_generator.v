@@ -18,8 +18,8 @@ module spacewar_noise_generator (
 `else
   localparam FREQ = 25200000;
 `endif
-localparam int BEEP_FREQ = 2000;
-localparam int BEEP_COUNTER_MAX = FREQ / ((BEEP_FREQ * 2) + 1);
+localparam integer BEEP_FREQ = 2000;
+localparam integer BEEP_COUNTER_MAX = FREQ / ((BEEP_FREQ * 2) + 1);
 
 // Counters
 reg [14:0] beep_counter;

@@ -150,7 +150,7 @@ module tt_um_spacewar_top (
   assign B = {2{video_active}} & {2{draw_star}};
 
   // Audio
-  assign uo_out[7] = audio_gun;
+  assign uio_out[7] = audio_gun;
 
   // Generate sync signals
   `ifndef HVSYNC_50MHZ
@@ -185,4 +185,4 @@ module tt_um_spacewar_top (
       .active_edges_o(frame_edges)
   );
 
-endmodule
+endmodule // tt_um_spacewar_top
