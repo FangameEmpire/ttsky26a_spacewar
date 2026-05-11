@@ -1,3 +1,5 @@
+`default_nettype none
+
 module simple_ship_vga_manager #(
   parameter XMAX = 5'd31,
   parameter YMAX = 5'd31,

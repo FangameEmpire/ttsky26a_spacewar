@@ -53,7 +53,7 @@ module simple_ship_wrapper #(
   // Death
 
   // Gun
-  assign do_bullet_0 = 1'b0;
+  assign do_bullet_o = 1'b0;
 
   // Audio
 
