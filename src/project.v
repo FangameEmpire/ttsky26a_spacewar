@@ -16,6 +16,9 @@ module tt_um_spacewar_top (
   input  wire       rst_n     // reset_n - low to reset
 );
 
+  // Defines
+  //`define HVSYNC_50MHZ // Allow 50 MHz operation by slowing down the HVsync generator.
+
   // VGA signals
   wire hsync;
   wire vsync;
@@ -29,9 +32,12 @@ module tt_um_spacewar_top (
   // TinyVGA PMOD
   assign uo_out = {hsync, B[0], G[0], R[0], vsync, B[1], G[1], R[1]};
 
+  // Audio enable
+  assign uio_oe[7] = 1'b1;
+
   // Unused outputs assigned to 0.
-  assign uio_out = 0;
-  assign uio_oe  = 0;
+  assign uio_out[6:0] = 0;
+  assign uio_oe[6:0]  = 0;
 
   // Suppress unused signals warning
   wire _unused_ok = &{ena, ui_in, uio_in};
@@ -94,15 +100,21 @@ module tt_um_spacewar_top (
   wire star_man_en_0;
   wire [9:0] star_x, star_y;
   wire [5:0] star_man_x_0, star_man_y_0;
-  vga_offset_manager star_offset(.en_i(1'b1), .pix_x_i(pix_x >> 3), .pix_y_i(pix_y >> 3), .object_x_i(star_x), .object_y_i(star_y),
+  vga_offset_manager star_offset (.en_i(1'b1), .pix_x_i(pix_x >> 3), .pix_y_i(pix_y >> 3), .object_x_i(star_x), .object_y_i(star_y),
     .object_en_o(star_man_en_0), .object_x_o(star_man_x_0), .object_y_o(star_man_y_0));
   
   wire draw_star, in_star_killzone;
-  center_star_vga_manager star_man(.clk_i(clk), .rst_i(~rst_n), .en_i(star_man_en_0), .pix_x_i(star_man_x_0), .pix_y_i(star_man_y_0),
+  center_star_vga_manager star_man (.clk_i(clk), .rst_i(~rst_n), .en_i(star_man_en_0), .pix_x_i(star_man_x_0), .pix_y_i(star_man_y_0),
     .rng_i(10'b0), .frame_upd_i(1'b0), .draw_star_o(draw_star), .in_star_killzone_o(in_star_killzone));
 
   assign star_x = 10'd40;
   assign star_y = 10'd10;
+
+  // Noise generator
+  wire [12:0] rng;
+  wire audio_gun, audio_thrust, audio_death, audio_gun_sync;
+  spacewar_noise_generator noise_gen_0 (.clk_i(clk), .rst_i(~rst_n), .en_i(1'b1), .rng_o(rng), .gun_sync_o(audio_gun_sync),
+    .gun_o(audio_gun), .thrust_o(audio_thrust), .death_o(audio_death));
 
   // Gamepad Pmod
   wire inp_b, inp_y, inp_select, inp_start, inp_up, inp_down, inp_left, inp_right, inp_a, inp_x, inp_l, inp_r;
@@ -137,7 +149,11 @@ module tt_um_spacewar_top (
   assign G = {2{video_active}} & {2{|draw_ship_line}};
   assign B = {2{video_active}} & {2{draw_star}};
 
+  // Audio
+  assign uo_out[7] = audio_gun;
+
   // Generate sync signals
+  `ifndef HVSYNC_50MHZ
   hvsync_generator hvsync_gen (
     .clk(clk),
     .reset(~rst_n),
@@ -147,6 +163,18 @@ module tt_um_spacewar_top (
     .hpos(pix_x),
     .vpos(pix_y)
   );
+  `else
+  hvsync_generator_enabled hvsync_gen_en (
+    .clk(clk),
+    .reset(~rst_n),
+    .en(counter[0]),
+    .hsync(hsync),
+    .vsync(vsync),
+    .display_on(video_active),
+    .hpos(pix_x),
+    .vpos(pix_y)
+  );
+  `endif
 
   wire [1:0] frame_edges;
   hvsync_generator_decoder vga_sync_decoder (

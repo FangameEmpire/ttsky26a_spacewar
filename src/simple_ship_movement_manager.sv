@@ -1,8 +1,6 @@
 module simple_ship_movement_manager #(
   parameter WIDTH = 32,
-  parameter HEIGHT = 32, 
-  localparam XW = $clog2(WIDTH-1),
-  localparam YW = $clog2(HEIGHT-1)
+  parameter HEIGHT = 32
 ) (
   input wire clk_i,
   input wire rst_i,
@@ -21,8 +19,10 @@ module simple_ship_movement_manager #(
   output wire [2:0] angle_o
 );
   // Store parameters
-  parameter X_MAX = (640 - 1);
-  parameter Y_MAX = (480 - 1);
+  localparam XW = $clog2(WIDTH-1);
+  localparam YW = $clog2(HEIGHT-1);
+  localparam X_MAX = (640 - 1);
+  localparam Y_MAX = (480 - 1);
 
   // Store internal copies of position and angle
   reg [9:0] x, y;
