@@ -74,29 +74,32 @@ module tt_um_spacewar_top (
   // Suppress unused signals warning
   wire _unused_ok_ = &{pix_y};
 
-  // Ship tests
+  // Ships
   wire [9:0] ship_x_0, ship_y_0, ship_x_1, ship_y_1;
   wire [2:0] ship_angle_0, ship_angle_1;
   wire [1:0] draw_ship_line, in_ship_hitbox;
 
-  wire [3:0] default_vel;
-  assign default_vel = 4'h7;
+  localparam DEFAULT_VEL = 4'h7;
   localparam SHIP_SIZE = 16;
 
-  simple_ship_wrapper #(.WIDTH(SHIP_SIZE), .HEIGHT(SHIP_SIZE)) ship_wrapper_0 (
+  wire [1:0] destroy_bullet, do_bullet;
+
+  simple_ship_wrapper #(.WIDTH(SHIP_SIZE), .HEIGHT(SHIP_SIZE), .X_VEL(DEFAULT_VEL), .Y_VEL(DEFAULT_VEL)) ship_wrapper_0 (
     .clk_i(clk), .rst_i(~rst_n), .en_i(1'b1), .pix_x_i(pix_x), .pix_y_i(pix_y), .cardinal_i(udlr_0),
     .load_x_i(10'd480), .load_y_i(10'd120), .load_angle_i(3'h6), .load_movement_settings_i(load_ship[0]),
-    .x_vel_i(default_vel), .y_vel_i(default_vel), .allow_angle_upd_i(allow_angle_upd), .update_movement_settings_i(frame_edges[1]),
+    .allow_angle_upd_i(allow_angle_upd), .update_movement_settings_i(frame_edges[1]),
     .x_o(ship_x_0), .y_o(ship_y_0), .angle_o(ship_angle_0),
-    .draw_ship_line_o(draw_ship_line[0]), .in_ship_hitbox_o(in_ship_hitbox[0])
+    .draw_ship_line_o(draw_ship_line[0]), .in_ship_hitbox_o(in_ship_hitbox[0]),
+    .destroy_bullet_i(destroy_bullet[0]), .do_bullet_o(do_bullet[0])
   );
 
-  simple_ship_wrapper #(.WIDTH(SHIP_SIZE), .HEIGHT(SHIP_SIZE)) ship_wrapper_1 (
+  simple_ship_wrapper #(.WIDTH(SHIP_SIZE), .HEIGHT(SHIP_SIZE), .X_VEL(DEFAULT_VEL), .Y_VEL(DEFAULT_VEL)) ship_wrapper_1 (
     .clk_i(clk), .rst_i(~rst_n), .en_i(1'b1), .pix_x_i(pix_x), .pix_y_i(pix_y), .cardinal_i(dbg_share_ctrl0 ? xbya_0 : udlr_1),
     .load_x_i(10'd160), .load_y_i(10'd360), .load_angle_i(3'h2), .load_movement_settings_i(load_ship[1]),
-    .x_vel_i(default_vel), .y_vel_i(default_vel), .allow_angle_upd_i(allow_angle_upd), .update_movement_settings_i(frame_edges[1]),
+    .allow_angle_upd_i(allow_angle_upd), .update_movement_settings_i(frame_edges[1]),
     .x_o(ship_x_1), .y_o(ship_y_1), .angle_o(ship_angle_1),
-    .draw_ship_line_o(draw_ship_line[1]), .in_ship_hitbox_o(in_ship_hitbox[1])
+    .draw_ship_line_o(draw_ship_line[1]), .in_ship_hitbox_o(in_ship_hitbox[1]),
+    .destroy_bullet_i(destroy_bullet[1]), .do_bullet_o(do_bullet[1])
   );
 
   // Ship death and reload handler
@@ -174,12 +177,12 @@ end
 
   // Green and multicolor VGA signals
   wire [1:0] R_greenonly, G_greenonly, B_greenonly, R_multicolor, G_multicolor, B_multicolor;
-  assign R_greenonly = {2{(dbg_show_hitboxes & (|in_ship_hitbox | in_star_killzone))}};
+  assign R_greenonly = {2{(dbg_show_hitboxes & (|in_ship_hitbox | in_star_killzone) | |do_bullet)}};
   assign G_greenonly = G_multicolor | B_multicolor;
   assign B_greenonly = 2'b0;
-  assign R_multicolor = {2{(dbg_show_hitboxes & (|in_ship_hitbox | in_star_killzone))}}; // TODO: Bullets, Explosions
-  assign G_multicolor = {2{|draw_ship_line}}; // TODO: Bullets, Explosions
-  assign B_multicolor = {2{draw_star}}; // TODO: Bullets
+  assign R_multicolor = R_greenonly | {2{1'b0}}; // TODO: Explosions
+  assign G_multicolor = {2{|draw_ship_line | (|do_bullet & ~dbg_show_hitboxes)}}; // TODO: Explosions
+  assign B_multicolor = {2{draw_star | (|do_bullet & ~dbg_show_hitboxes)}};
 
   // VGA
   assign R = {2{video_active}} & (dbg_greenonly ? R_greenonly : R_multicolor);
